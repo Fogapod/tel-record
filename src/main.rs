@@ -9,7 +9,8 @@ use crate::address::Address;
 use crate::os::AppRegistry;
 use crate::session::Session;
 
-fn call(addr: &mut Address) -> Result<Session, String> {
+// outgoing call processing
+fn outgoing_call(addr: &mut Address) -> Result<Session, String> {
     eprintln!("ocall:  calling: {}", &addr);
     let ph_number = addr.resolve_single(false)?;
     eprintln!("ocall: resolved: {}", &addr);
@@ -22,6 +23,7 @@ fn call(addr: &mut Address) -> Result<Session, String> {
     Ok(session)
 }
 
+// incoming call processing
 fn incoming_call(
     ph_number: &str,
     addr: &mut Address,
@@ -72,7 +74,7 @@ fn main_() -> Result<(), String> {
         let mut addr = Address::new(&argv[2])?;
 
         match &argv[1][..] {
-            "ocall" => call(&mut addr)?,
+            "ocall" => outgoing_call(&mut addr)?,
             "icall" => {
                 let app_registry = AppRegistry::new();
 
@@ -99,9 +101,9 @@ fn default() -> Result<(), String> {
     let mut addr_unresolvable = Address::new("google.com")?;
 
     eprintln!("--- OUTGOING CALLS ---");
-    call(&mut addr_num)?;
-    call(&mut addr_resolvable)?;
-    call(&mut addr_resolvable_extra_info)?;
+    outgoing_call(&mut addr_num)?;
+    outgoing_call(&mut addr_resolvable)?;
+    outgoing_call(&mut addr_resolvable_extra_info)?;
 
     eprintln!(
         "calling {} (unresolvable): {:?}\n",

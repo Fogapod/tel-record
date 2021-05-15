@@ -12,11 +12,14 @@ impl Session {
     }
 
     // example methods
+
+    // init conversation
     #[allow(dead_code)]
     pub fn init(&mut self) {
         unimplemented!();
     }
 
+    // close conversation
     #[allow(dead_code)]
     pub fn close(&mut self) {
         unimplemented!();

@@ -3,8 +3,6 @@ use std::fmt;
 use std::rc::Rc;
 
 pub struct AppRegistry {
-    #[allow(dead_code)]
-    apps: Vec<Rc<dyn App>>,
     registry: HashMap<String, Rc<dyn App>>,
 }
 
@@ -15,18 +13,20 @@ impl AppRegistry {
         let modbaynet = Rc::new(ModbayNet::new());
 
         for addr in modbaynet.register() {
+            // NOTE: in production collisions and hierarchy should be checked
+            // carefully
             registry.insert(addr, Rc::clone(&modbaynet) as Rc<dyn App>);
         }
 
-        let apps = vec![modbaynet as Rc<dyn App>];
-
-        Self { apps, registry }
+        Self { registry }
     }
 
+    // try to get general website info from app
     pub fn get_general_info(&self, domain: &str) -> Option<String> {
         self.registry.get(domain).map(|app| app.general_info())
     }
 
+    // try to get extra info about subaddress from app
     pub fn get_extra_info(&self, domain: &str, path: &str) -> Option<String> {
         if let Some(app) = self.registry.get(domain) {
             app.fetch_info(path)
@@ -37,16 +37,20 @@ impl AppRegistry {
 }
 
 pub trait App: fmt::Debug {
+    // list of domains app is serving
     fn register(&self) -> Vec<String>;
+
+    // get general unconditional info
     fn general_info(&self) -> String;
+
+    // get info from specific path
     fn fetch_info(&self, path: &str) -> Option<String>;
 }
 
 // theoretical classified advertisements app like Avito or Ozon
 #[derive(Debug)]
 struct ModbayNet {
-    #[allow(dead_code)]
-    user_db: HashMap<String, ModbayUser>,
+    // external database accessible via API call
     order_db: HashMap<String, ModbayOrder>,
 }
 
@@ -85,23 +89,7 @@ impl fmt::Display for ModbayOrder {
 
 impl ModbayNet {
     fn new() -> Self {
-        let mut user_db = HashMap::new();
         let mut order_db = HashMap::new();
-
-        user_db.insert(
-            "0".to_owned(),
-            ModbayUser {
-                username: "rust_coder2".to_owned(),
-                reputation: 42,
-            },
-        );
-        user_db.insert(
-            "1".to_owned(),
-            ModbayUser {
-                username: "untrusted_user".to_owned(),
-                reputation: -8,
-            },
-        );
 
         order_db.insert(
             "12345".to_owned(),
@@ -115,18 +103,14 @@ impl ModbayNet {
             },
         );
 
-        Self { user_db, order_db }
+        Self { order_db }
     }
 
     fn fetch_order(&self, order_id: &str) -> Option<&ModbayOrder> {
-        // API call
+        // API call happens here.
+        // Since app handles this internally via callback, it can use access
+        // tokens if user is logged in.
         self.order_db.get(order_id)
-    }
-
-    #[allow(dead_code)]
-    fn fetch_user(&self, user_id: &str) -> Option<&ModbayUser> {
-        // API call
-        self.user_db.get(user_id)
     }
 }
 
